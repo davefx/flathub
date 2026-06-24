@@ -1,0 +1,43 @@
+app-id: org.gnome.gnomint
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: gnomint
+
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /share/aclocal
+  - /share/man
+  - /share/info
+  - '*.la'
+  - '*.a'
+
+modules:
+  # Build-time only: the GNOME 48 SDK ships gettext but not intltool,
+  # which gnoMint's autotools build still needs. Stripped from the app.
+  - name: intltool
+    cleanup:
+      - '*'
+    buildsystem: autotools
+    sources:
+      - type: archive
+        url: https://launchpad.net/intltool/trunk/0.51.0/+download/intltool-0.51.0.tar.gz
+        sha256: 67c74d94196b153b774ab9f89b2fa6c6ba79352407037c8c14d5aeb334e959cd
+
+  - name: gnomint
+    buildsystem: autotools
+    post-install:
+      # GSettings schema isn't compiled into a staged install, so do it here.
+      - glib-compile-schemas /app/share/glib-2.0/schemas/
+    sources:
+      - type: git
+        url: https://github.com/davefx/gnoMint.git
+        tag: v1.6.8
+        commit: 3b4566950adecaa47acacb6889bd6a564d812f6d
